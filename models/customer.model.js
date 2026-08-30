@@ -50,16 +50,21 @@ const customerSchema = new mongoose.Schema(
       },
     },
 
-    accountStatus: {
+    onboardingStatus: {
       type: String,
-      enum: ["active", "suspended", "pending", "closed"],
+      enum: [
+        "pending",
+        "bvn_verified",
+        "completed",
+        "failed",
+      ],
       default: "pending",
     },
 
-    verificationStatus: {
+    accountStatus: {
       type: String,
-      enum: ["unverified", "pending", "verified", "rejected"],
-      default: "unverified",
+      enum: ["pending", "active", "suspended", "closed"],
+      default: "pending",
     },
 
     bvn: {
@@ -72,11 +77,6 @@ const customerSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
-    },
-
-    profilePicture: {
-      type: String,
-      default: null,
     },
 
     lastLogin: {
