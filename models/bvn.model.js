@@ -14,20 +14,40 @@ const bvnSchema = new mongoose.Schema(
       unique: true,
     },
 
-    firstName: String,
-    lastName: String,
-    dob: Date,
-    phone: String,
+    firstName: {
+      type: String,
+      required: true,
+    },
+
+    lastName: {
+      type: String,
+      required: true,
+    },
+
+    dob: {
+      type: Date,
+      required: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+    },
 
     verificationStatus: {
       type: String,
-      enum: ["pending", "verified", "failed"],
-      default: "pending",
+      enum: ["verified", "failed"],
+      required: true,
     },
 
-    verifiedAt: Date,
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 module.exports = mongoose.model("Bvn", bvnSchema);
