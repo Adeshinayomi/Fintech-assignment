@@ -1,24 +1,41 @@
-const axios = require("axios")
+const axios = require("axios");
 
-const nibbsUrl = process.env.NIBBS_BASE_URL
-const token = null
+const NIBSS_BASE_URL = process.env.NIBSS_BASE_URL;
 
-const generateToken = async ()=>{
+let cachedToken = null;
+let tokenExpiresAt = 0;
+
+const getToken = async () => {
+  // Reuse token if it is still valid
+  if (cachedToken && Date.now() < tokenExpiresAt) {
+    return cachedToken;
+  }
+
   const response = await axios.post(
-    `${nibbsUrl}/api/auth/token`,
+    `${NIBSS_BASE_URL}/api/auth/token`,
     {
       apiKey: process.env.NIBBS_APIKEY,
       apiSecret: process.env.NIBBS_APISECRET,
     }
   );
 
-  token = response.data.token;
+  cachedToken = response.data.token;
 
-  return token;
-}
+  // JWT expires in 1 hour in your response.
+  // Refresh 1 minute early.
+  tokenExpiresAt = Date.now() + 59 * 60 * 1000;
 
-const insertBvn = async ({ bvn, firstName, lastName, dob, phone }) => {
-  const jwt = await getToken();
+  return cachedToken;
+};
+
+const insertBvn = async ({
+  bvn,
+  firstName,
+  lastName,
+  dob,
+  phone,
+}) => {
+  const token = await getToken();
 
   const response = await axios.post(
     `${NIBSS_BASE_URL}/api/insertBvn`,
@@ -31,7 +48,7 @@ const insertBvn = async ({ bvn, firstName, lastName, dob, phone }) => {
     },
     {
       headers: {
-        Authorization: `Bearer ${jwt}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );
@@ -40,7 +57,7 @@ const insertBvn = async ({ bvn, firstName, lastName, dob, phone }) => {
 };
 
 const createAccount = async ({ bvn, dob }) => {
-  const jwt = await getToken();
+  const token = await getToken();
 
   const response = await axios.post(
     `${NIBSS_BASE_URL}/api/account/create`,
@@ -51,7 +68,7 @@ const createAccount = async ({ bvn, dob }) => {
     },
     {
       headers: {
-        Authorization: `Bearer ${jwt}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );
