@@ -1,8 +1,9 @@
 const Customer = require('../models/customer.model')
 const Bvn = require('../models/bvn.model')
 const Account = require('../models/account.model')
-
 const {insertBvn,createAccount}=require('../services/nibbs.service')
+
+const bcrypt= require('bcrypt')
 
 const onboardCustomer = async (req, res) => {
   try {
@@ -16,13 +17,20 @@ const onboardCustomer = async (req, res) => {
       bvn,
     } = req.body;
 
-    // 1. Create customer
+    const existingCustomer= await Customer.findOne({email,phoneNumber})
+
+    if(existingCustomer){
+        res.status(400).json({message:'user exists already'})
+    }
+    const salt = await bcrypt.genSalt(10)
+    const hashpassword = await bcrypt.hash(password,salt)
+
     const customer = await Customer.create({
       firstName,
       lastName,
       email,
       phoneNumber,
-      password,
+      password:hashpassword,
       dateOfBirth,
     });
 
