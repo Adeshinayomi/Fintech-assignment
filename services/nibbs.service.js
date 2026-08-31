@@ -1,5 +1,6 @@
 const axios = require("axios");
-
+const dotenv= require('dotenv')
+dotenv.config()
 const NIBSS_BASE_URL = process.env.NIBSS_BASE_URL;
 
 let cachedToken = null;
@@ -61,6 +62,7 @@ const insertNin = async ({
   firstName,
   lastName,
   dob,
+  phone,
 }) => {
   const token = await getToken();
 
@@ -71,6 +73,7 @@ const insertNin = async ({
       firstName,
       lastName,
       dob,
+      phone,
     },
     {
       headers: {
@@ -82,14 +85,14 @@ const insertNin = async ({
   return response.data;
 };
 
-const createAccount = async ({ bvn, dob }) => {
+const createAccount = async ({ kycType, kycID, dob }) => {
   const token = await getToken();
 
   const response = await axios.post(
     `${NIBSS_BASE_URL}/api/account/create`,
     {
-      kycType: "BVN",
-      kycID: bvn,
+      kycType,
+      kycID,
       dob,
     },
     {

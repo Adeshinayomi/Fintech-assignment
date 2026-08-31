@@ -8,9 +8,15 @@ const accountSchema = new mongoose.Schema(
       required: true,
     },
 
-    bvnId: {
+    kycRecordId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Bvn",
+      refPath: "kycModel",
+      required: true,
+    },
+
+    kycModel: {
+      type: String,
+      enum: ["Bvn", "Nin"],
       required: true,
     },
 
