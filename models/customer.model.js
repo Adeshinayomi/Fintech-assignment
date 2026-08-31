@@ -1,7 +1,16 @@
 const mongoose = require("mongoose");
+const crypto = require("crypto");
 
 const customerSchema = new mongoose.Schema(
   {
+    customerId: {
+      type: String,
+      unique: true,
+      immutable: true,
+      default: () =>
+        `CUS-${crypto.randomBytes(6).toString("hex").toUpperCase()}`,
+    },
+
     firstName: {
       type: String,
       required: true,
@@ -41,12 +50,38 @@ const customerSchema = new mongoose.Schema(
     },
 
     address: {
-      street: String,
-      city: String,
-      state: String,
+      street: {
+        type: String,
+        trim: true,
+      },
+
+      city: {
+        type: String,
+        trim: true,
+      },
+
+      state: {
+        type: String,
+        trim: true,
+      },
+
       country: {
         type: String,
         default: "Nigeria",
+        trim: true,
+      },
+    },
+
+    kyc: {
+      type: {
+        type: String,
+        enum: ["BVN", "NIN"],
+        required: true,
+      },
+
+      value: {
+        type: String,
+        required: true,
       },
     },
 
@@ -54,7 +89,7 @@ const customerSchema = new mongoose.Schema(
       type: String,
       enum: [
         "pending",
-        "bvn_verified",
+        "kyc_verified",
         "completed",
         "failed",
       ],
@@ -63,20 +98,13 @@ const customerSchema = new mongoose.Schema(
 
     accountStatus: {
       type: String,
-      enum: ["pending", "active", "suspended", "closed"],
+      enum: [
+        "pending",
+        "active",
+        "suspended",
+        "closed",
+      ],
       default: "pending",
-    },
-
-    bvn: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
-
-    nin: {
-      type: String,
-      unique: true,
-      sparse: true,
     },
 
     lastLogin: {
@@ -92,3 +120,4 @@ const customerSchema = new mongoose.Schema(
 const Customer = mongoose.model("Customer", customerSchema);
 
 module.exports = Customer;
+

@@ -1,7 +1,8 @@
 const Customer = require('../models/customer.model')
-const Bvn = require('../models/bvn.model')
+const BVN = require('../models/bvn.model')
+const NIN = require('../models/nin.model')
 const Account = require('../models/account.model')
-const {insertBvn,createAccount}=require('../services/nibbs.service')
+const {insertBvn,insertNin,createAccount}=require('../services/nibbs.service')
 
 const bcrypt= require('bcrypt')
 
@@ -14,8 +15,19 @@ const onboardCustomer = async (req, res) => {
       phoneNumber,
       password,
       dateOfBirth,
-      bvn,
+      address,
+      kyc
     } = req.body;
+
+    if(!firstName || !lastName || !email || !phoneNumber || !password || !dateOfBirth || !address){
+        res.status(400).json({message:"All field are required"})
+    }
+
+    
+    if (!kyc || !kyc.type || !kyc.value) { 
+        return res.status(400).json({ success: false, message: "KYC information is required", });
+    }
+
 
     const existingCustomer= await Customer.findOne({$or: [{ email }, { phoneNumber }]})
 
@@ -23,13 +35,12 @@ const onboardCustomer = async (req, res) => {
         res.status(409).json({message:'user exists already'})
     }
 
-    const existingBvn = await Bvn.findOne({ bvn });
-
-    if (existingBvn) {
-      return res.status(409).json({
-        success: false,
-        message: "BVN is already linked to a customer",
-      });
+    const existingKyc = await Customer.findOne({ "kyc.value": kyc.value, }); 
+    if (existingKyc) { 
+        return res.status(409).json({ 
+            success: false,
+            message: `${kyc.type} is already linked to a customer`, 
+        });
     }
 
 
@@ -43,65 +54,55 @@ const onboardCustomer = async (req, res) => {
       phoneNumber,
       password:hashpassword,
       dateOfBirth,
+      address, 
+      kyc: { 
+        type: kyc.type, 
+        value: kyc.value,
+      },
       onboardingStatus: "pending",
       accountStatus: "pending",
     });
 
-   // Send BVN information to NIBSS
-    const bvnResponse = await insertBvn({
-      bvn,
-      firstName,
-      lastName,
-      dob: dateOfBirth,
-      phone: phoneNumber,
-    });
-
-    // Check NIBSS response
-    if (!bvnResponse.success || !bvnResponse.data) {
-      await Customer.findByIdAndUpdate(customer._id, {
-        onboardingStatus: "failed",
-      });
-
-      return res.status(400).json({
-        success: false,
-        message: "BVN verification failed",
-      });
+    if (kyc.type === "BVN") {
+        kycResponse = await insertBvn({ 
+            bvn: kyc.value, firstName, lastName, dob: dateOfBirth, phone: phoneNumber,
+        }); 
+    }else { 
+        kycResponse = await insertNin({ nin: kyc.value, firstName, lastName, dob: dateOfBirth, }); 
     }
 
-    const bvnData = bvnResponse.data;
+    // Check KYC response
+    if (!kycResponse || !kycResponse.success) {
+        await Customer.findByIdAndUpdate(customer.customerId, { onboardingStatus: "failed", })
 
-    // Save verified BVN
-    const bvnRecord = await Bvn.create({
-      customerId: customer._id,
-      bvn: bvnData.bvn,
-      firstName: bvnData.firstName,
-      lastName: bvnData.lastName,
-      dob: bvnData.dob,
-      phone: bvnData.phone,
-      verificationStatus: "verified",
-      verifiedAt: new Date(),
-    });
+        return res.status(400).json({ success: false, message: `${kyc.type} verification failed`, }); 
+    } 
 
-    // Update onboarding status
-    await Customer.findByIdAndUpdate(customer._id, {
-      onboardingStatus: "bvn_verified",
-    });
+    
+    //  Update customer KYC status 
+    await Customer.findByIdAndUpdate(customer.customerId, { onboardingStatus: "kyc_verified", });
 
-    // Create account using BVN
+    await kyc.type.create({
+        customerId: customer.customerId,
+        bvn: kyc.value, 
+        firstName: kycResponse.firstName, 
+        lastName: kycResponse.lastName,
+        dob:kycResponse.dob,
+        phone: kycResponse.phone, 
+        verificationStatus: "verified", verifiedAt: new Date(),
+    })
+
+    // 9. Create account using verified KYC 
     const accountResponse = await createAccount({
-      bvn: bvnData.bvn,
-      dob: bvnData.dob,
+        kycType: kyc.type, 
+        kycID: kycResponse.value, 
+        dob: kycResponse.dob, 
     });
 
-    if (!accountResponse.account) {
-      await Customer.findByIdAndUpdate(customer._id, {
-        onboardingStatus: "failed",
-      });
-
-      return res.status(400).json({
-        success: false,
-        message: "BVN verified but account creation failed",
-      });
+    if (!accountResponse || !accountResponse.account) {
+        await Customer.findByIdAndUpdate(customer._id, { onboardingStatus: "failed", }); 
+        
+        return res.status(400).json({ success: false, message: "KYC verified but account creation failed", });
     }
 
     const accountData = accountResponse.account;
