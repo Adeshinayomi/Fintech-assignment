@@ -56,6 +56,32 @@ const insertBvn = async ({
   return response.data;
 };
 
+const insertNin = async ({
+  nin,
+  firstName,
+  lastName,
+  dob,
+}) => {
+  const token = await getToken();
+
+  const response = await axios.post(
+    `${NIBSS_BASE_URL}/api/insertNin`,
+    {
+      nin,
+      firstName,
+      lastName,
+      dob,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
+
 const createAccount = async ({ bvn, dob }) => {
   const token = await getToken();
 
@@ -80,4 +106,5 @@ module.exports = {
   getToken,
   insertBvn,
   createAccount,
+  insertNin
 };
