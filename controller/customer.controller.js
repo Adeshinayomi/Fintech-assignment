@@ -37,6 +37,7 @@ const onboardCustomer = async (req, res) => {
     }
 
     const kycType = String(kyc.type).toUpperCase();
+    
     if (!['BVN', 'NIN'].includes(kycType)) {
       return res.status(400).json({ success: false, message: "KYC type must be BVN or NIN" });
     }
@@ -98,7 +99,8 @@ const onboardCustomer = async (req, res) => {
     await Customer.findByIdAndUpdate(customer._id, { onboardingStatus: "kyc_verified", });
 
     const KycModel = kycType === "BVN" ? BVN : NIN;
-    const kycRecord = await KycModel.create({
+
+    await KycModel.create({
         customerId: customer._id,
         [kycType === "BVN" ? "bvn" : "nin"]: kyc.value,
         firstName: kycResponse.firstName || firstName,
@@ -126,8 +128,6 @@ const onboardCustomer = async (req, res) => {
     // Save account
     const account = await Account.create({
       customerId: customer._id,
-      kycRecordId: kycRecord._id,
-      kycModel: kycType === "BVN" ? "Bvn" : "Nin",
       accountNumber: accountData.accountNumber,
       accountName: accountData.accountName,
       bankCode: accountData.bankCode,

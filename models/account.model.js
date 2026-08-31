@@ -8,18 +8,6 @@ const accountSchema = new mongoose.Schema(
       required: true,
     },
 
-    kycRecordId: {
-      type: mongoose.Schema.Types.ObjectId,
-      refPath: "kycModel",
-      required: true,
-    },
-
-    kycModel: {
-      type: String,
-      enum: ["Bvn", "Nin"],
-      required: true,
-    },
-
     accountNumber: {
       type: String,
       required: true,
