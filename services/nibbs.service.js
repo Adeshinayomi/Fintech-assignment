@@ -104,10 +104,25 @@ const createAccount = async ({ kycType, kycID, dob }) => {
 
   return response.data;
 };
+const getNameEnquiry = async (accountNumber) => {
+    const token = await getToken();
+
+    const response = await axios.get(
+        `${NIBSS_BASE_URL}/api/nameEnquiry?accountNumber=${accountNumber}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return response.data;
+};
 
 module.exports = {
   getToken,
   insertBvn,
   createAccount,
-  insertNin
+  insertNin,
+  getNameEnquiry
 };
