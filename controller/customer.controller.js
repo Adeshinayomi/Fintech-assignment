@@ -2,6 +2,7 @@ const Customer = require('../models/customer.model')
 const BVN = require('../models/bvn.model')
 const NIN = require('../models/nin.model')
 const Account = require('../models/account.model')
+const jwt = require("jsonwebtoken")
 const {insertBvn,insertNin,createAccount}=require('../services/nibbs.service')
 
 const bcrypt= require('bcrypt')
@@ -37,7 +38,7 @@ const onboardCustomer = async (req, res) => {
     }
 
     const kycType = String(kyc.type).toUpperCase();
-    
+
     if (!['BVN', 'NIN'].includes(kycType)) {
       return res.status(400).json({ success: false, message: "KYC type must be BVN or NIN" });
     }
@@ -174,6 +175,37 @@ const onboardCustomer = async (req, res) => {
   }
 };
 
+const customerLogin = async (req,res)=>{
+    try{
+        const {phone , password} = req.body
+
+        if(!phone || !password) {
+            res.status(400).json({message:"All field are required"})
+        }
+
+        const customer =  await Customer.findOne({phoneNumber:phone})
+        
+        if(!customer){
+            res.status(400).json({message:"Invalid Credentials"})
+        }
+        const isMatch = await bcrypt.compare(password,customer.password)
+
+        if(!isMatch){
+            res.status(400).json({message:"Invalid credentials"})
+        }
+
+        const token=jwt.sign({email:customer.email,id:customer._id},process.env.JWT_SECRET,{expiresIn:process.env.JWT_EXPIRES_IN})
+
+        res.status(200).json({
+            message:"login sucessfull",
+            token
+        })
+    }catch(error){
+        res.status(500).json({message:error.message})
+    }
+}
+
 module.exports = {
   onboardCustomer,
+  customerLogin
 };
