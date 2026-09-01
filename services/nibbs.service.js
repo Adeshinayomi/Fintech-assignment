@@ -108,7 +108,7 @@ const getNameEnquiry = async (accountNumber) => {
     const token = await getToken();
 
     const response = await axios.get(
-        `${NIBSS_BASE_URL}/api/nameEnquiry?accountNumber=${accountNumber}`,
+        `${NIBSS_BASE_URL}/api/account/name-enquiry/${accountNumber}`,
         {
             headers: {
                 Authorization: `Bearer ${token}`,
