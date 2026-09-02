@@ -133,11 +133,46 @@ const getAccountBalance = async (accountNumber) => {
 
     return response.data;
 };
+
+const transferFunds = async ({ fromAccount, toAccount, amount }) => {
+    const token = await getToken();
+
+    const response = await axios.post(
+        `${NIBSS_BASE_URL}/api/transfer`,
+        {
+            fromAccount,
+            toAccount,
+            amount
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return response.data;
+};
+
+const transactionStatus = async (transactionId) => {
+    const token = await getToken();
+    const response = await axios.get(
+        `${NIBSS_BASE_URL}/api/transaction/${transactionId}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+    return response.data;
+};
 module.exports = {
   getToken,
   insertBvn,
   createAccount,
   insertNin,
   getNameEnquiry,
-  getAccountBalance
+  getAccountBalance,
+  transferFunds,
+  transactionStatus
 };
