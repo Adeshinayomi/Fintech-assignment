@@ -15,18 +15,14 @@ const transactionSchema = new mongoose.Schema(
             type: Number,
             required: true,
         },
-        senderAccountNumber: {
-            type: String,
-            required: true,
-        },
         receiverAccountNumber: {
             type: String,
             required: true,
         },
         status: {
             type: String,
-            enum: ['pending', 'completed', 'failed'],
-            default: 'pending',
+            enum: ['PENDING', 'SUCCESS', 'FAILED'],
+            default: 'PENDING',
         },
         type: {
             type: String,
