@@ -1,8 +1,10 @@
 const express = require('express')
 const route = express.Router()
-const {Transfer}=require('../controller/transaction.controller')
+const {Transfer, getTransactionStatus,getTransactionHistory}=require('../controller/transaction.controller')
 const auth=require('../middleware/auth')
 
 route.post('/transfer', auth, Transfer)
+route.get('/transaction-status/:transactionId', auth, getTransactionStatus)
+route.get('/history/:accountId', auth, getTransactionHistory)
 
 module.exports = route
