@@ -119,10 +119,25 @@ const getNameEnquiry = async (accountNumber) => {
     return response.data;
 };
 
+const getAccountBalance = async (accountNumber) => {
+    const token = await getToken();
+
+    const response = await axios.get(
+        `${NIBSS_BASE_URL}/api/account/balance/${accountNumber}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return response.data;
+};
 module.exports = {
   getToken,
   insertBvn,
   createAccount,
   insertNin,
-  getNameEnquiry
+  getNameEnquiry,
+  getAccountBalance
 };
