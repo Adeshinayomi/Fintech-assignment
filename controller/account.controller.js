@@ -3,8 +3,15 @@ const { getNameEnquiry,getAccountBalance} = require("../services/nibbs.service")
 
 const getAccountName = async (req, res) => {
   try {
-    const { accountNumber} = req.params;
-    const result= await getNameEnquiry(accountNumber);
+    const accountOwner = req.customer;
+    console.log("Account Owner:", accountOwner);
+    const customerAccount = await Account.findOne({ customerId: accountOwner.id });
+
+    if (!customerAccount) {
+      return res.status(404).json({ message: 'Account not found for the customer' });
+    }
+
+    const result= await getNameEnquiry(customerAccount.accountNumber);
 
     res.status(200).json({ name: result.accountName });
 
@@ -15,8 +22,12 @@ const getAccountName = async (req, res) => {
 
 const getBalance = async (req, res) => {
   try {
-    const { accountNumber } = req.params;
-    const result = await getAccountBalance(accountNumber);
+    const owner = req.customer;
+    const customerAccount = await Account.findOne({ customerId: owner.id });
+    if (!customerAccount) {
+      return res.status(404).json({ message: 'Account not found for the customer' });
+    }
+    const result = await getAccountBalance(customerAccount.accountNumber);
 
     res.status(200).json({ balance: result.balance });
   } catch (error) {

@@ -4,15 +4,16 @@ const { transferFunds,getNameEnquiry,transactionStatus} = require('../services/n
 
 const Transfer= async (req, res) => {
     try {
-        const { senderAccountNumber, receiverAccountNumber, amount } = req.body;
-        if (!senderAccountNumber || !receiverAccountNumber || !amount) {
+        const sender = req.customer;
+        const senderAccount = await Account.findOne({ customerId: sender.id });
+        if (!senderAccount) {
+            return res.status(404).json({ message: 'Sender account not found' });
+        }
+        const { receiverAccountNumber, amount } = req.body;
+        if (!receiverAccountNumber || !amount) {
             return res.status(400).json({ message: 'All fields are required' });
         }
 
-        const senderAccount = await Account.findOne({ accountNumber: senderAccountNumber });
-        if (!senderAccount) {
-            return res.status(400).json({ message: 'Invalid request' });
-        }
 
         const receiverAccount = await getNameEnquiry(receiverAccountNumber);
         if (!receiverAccount) {
@@ -24,7 +25,7 @@ const Transfer= async (req, res) => {
         }
 
         const transferResponse = await transferFunds({
-            from: senderAccountNumber,
+            from: senderAccount.accountNumber,
             to: receiverAccountNumber,
             amount
         });
@@ -81,13 +82,17 @@ const getTransactionStatus = async (req, res) => {
 };
 const getTransactionHistory = async (req, res) => {
     try {
-        const { accountId } = req.params;
-        
-        if (!accountId) {
+        const owner = req.customer;
+        const account = await Account.findOne({ customerId: owner.id });
+        if (!account) {
+            return res.status(404).json({ message: 'Account not found for the customer' });
+        }
+
+        if (!account.id) {
             return res.status(400).json({ message: 'Account ID is required' });
         }
 
-        const transactions = await Transaction.find({ accountId }).sort({ createdAt: -1 });
+        const transactions = await Transaction.find({ accountId: account.id }).sort({ createdAt: -1 });
 
         res.status(200).json({ message: 'Transaction history retrieved', transactions });
     } catch (error) {
