@@ -19,13 +19,13 @@ const Transfer= async (req, res) => {
             return res.status(404).json({ message: 'Account not found' });
         }
 
-        if(senderAccount.balance < amount){
+        if(senderAccount.balance < Number(amount)){
             return res.status(400).json({ message: 'Insufficient funds' });
         }
 
         const transferResponse = await transferFunds({
-            fromAccount: senderAccountNumber,
-            toAccount: receiverAccountNumber,
+            from: senderAccountNumber,
+            to: receiverAccountNumber,
             amount
         });
 
@@ -33,12 +33,19 @@ const Transfer= async (req, res) => {
             return res.status(400).json({ message: 'Transfer failed', details: transferResponse });
         }
 
-        senderAccount.balance -= amount;
+        senderAccount.balance -= Number(amount);
         await senderAccount.save();
        
+        const receiverAccountInDb = await Account.findOne({ accountNumber: receiverAccountNumber });
+        
+        if (receiverAccountInDb) {
+            receiverAccountInDb.balance += Number(amount);
+            await receiverAccountInDb.save();
+        }
+
         const transaction = new Transaction({
             accountId: senderAccount._id,
-            transactionId: transferResponse.transactionId,
+            transactionId: transferResponse.reference,
             amount,
             receiverAccountNumber: receiverAccountNumber,
             status: transferResponse.status,
@@ -53,5 +60,10 @@ const Transfer= async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
+        console.error('Transfer error:', error);
     }
+};
+
+module.exports = {
+    Transfer
 };

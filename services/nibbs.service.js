@@ -134,14 +134,14 @@ const getAccountBalance = async (accountNumber) => {
     return response.data;
 };
 
-const transferFunds = async ({ fromAccount, toAccount, amount }) => {
+const transferFunds = async ({ from, to, amount }) => {
     const token = await getToken();
 
     const response = await axios.post(
         `${NIBSS_BASE_URL}/api/transfer`,
         {
-            fromAccount,
-            toAccount,
+            from,
+            to,
             amount
         },
         {
